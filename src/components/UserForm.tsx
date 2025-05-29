@@ -68,8 +68,28 @@ const UserForm: React.FC = () => {
            parseInt(formData.age) >= 18 && parseInt(formData.age) <= 120;
   }, [formData]);
 
-  // Validation function with all required validations
-  const validateForm = (): boolean => {
+  // Handle input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[name as keyof FormErrors]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: undefined,
+      }));
+    }
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    // Inline validation to ensure errors are set synchronously
     const newErrors: FormErrors = {};
 
     // Name validation - REQUIRED + minimum length
@@ -109,37 +129,15 @@ const UserForm: React.FC = () => {
       }
     }
 
+    // Set errors
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // Handle input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
     
-    // Clear error when user starts typing
-    if (errors[name as keyof FormErrors]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: undefined,
-      }));
-    }
-  };
-
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
-    // Always run validation on submit
-    const isValid = validateForm();
+    // Check if form is valid
+    const isValid = Object.keys(newErrors).length === 0;
     
     if (!isValid) {
       // Focus on first error field
-      if (errors.name && nameInputRef.current) {
+      if (newErrors.name && nameInputRef.current) {
         nameInputRef.current.focus();
       }
       return;
@@ -280,7 +278,7 @@ const UserForm: React.FC = () => {
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={!isFormValid || isSubmitting}
+          disabled={isSubmitting}
           className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${
             isFormValid && !isSubmitting
               ? 'bg-blue-600 hover:bg-blue-700 text-white'
